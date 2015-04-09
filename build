@@ -1,0 +1,11 @@
+#!/bin/bash
+
+while(true)
+do
+mix | grep Compiled
+
+[[ $? == 0 ]] && relx
+
+sleep 2
+done
+
