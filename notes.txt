@@ -1,4 +1,2 @@
-lo_odds:start_link().
-lo_match:start_link().
 football_events:new_match().
-lo_match:sub(1).
+lo_bettor:start_link(

@@ -29,10 +29,12 @@ print_event(E) ->
 
 publish_odds({{match_info, Id}, {starts_in, Countdown}}) -> 
     Odds = lo_odds:get_odds({0,0}),
+    lo_ps:publish({lo_match, Id}, {Id, Odds}),
     io:format("Pre-Match State: ~p [~p]~n    Odds: ~p~n", [Id, Countdown, Odds]);
 
 publish_odds({{match_info, Id}, {Period, Time, {GoalsA, GoalsB}}}) -> 
     Odds = lo_odds:get_odds({GoalsA, GoalsB}),
+    lo_ps:publish({lo_match, Id}, {Id, Odds}),
     io:format("Match State (~p) ~ps: ~p (~p, ~p)~n    Odds: ~p~n", [Period, Time, Id, GoalsA, GoalsB, Odds]);
 
 publish_odds(E) -> 
@@ -48,8 +50,7 @@ subscribe_to([]) ->
 
 % Server Code
 init(S) -> 
-    Events = football_events:matches(),
-    lo_match:subscribe_to(Events),
+    timer:send_interval(3000, subscribe_matches),
     {ok, S}.
 
 handle_cast({sub, Id}, S) -> 
@@ -61,9 +62,14 @@ handle_cast({sub, Id}, S) ->
 handle_call({echo, Msg}, _From, S) -> 
     {reply, ok, S}.
 
-handle_info(Msg, _S) ->
+handle_info(subscribe_matches, S) ->
+    Events = football_events:matches(),
+    lo_match:subscribe_to(Events),
+    {noreply, S};
+
+handle_info(Msg, S) ->
     lo_match:publish_odds(Msg),
-    {noreply, []}.
+    {noreply, S}.
     
 terminate(_A, _S) ->
     {noreply, []}.
@@ -74,3 +80,4 @@ code_change(_A, _B, _C) ->
 %% Client Functions
 sub(Id) ->
     gen_server:cast(?MODULE, {sub, Id}).
+

@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/0]).
+-export([start_link/2]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -12,35 +12,34 @@
         terminate/2,
         code_change/3]).
 
-start_link(Ids) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, Ids, []).
+start_link(Name, Ids) ->
+    gen_server:start_link({via, lo_ps, Name}, ?MODULE, {Name, Ids}, []).
 
 % Server Code
-init(Ids) -> 
-    lo_bettor:subscribe_to(Ids),
-    {ok, Ids}.
+init({Name, [H|Tail]}) -> 
+    lo_ps:subscribe({lo_match, H}),
+    lo_bettor:init({Name, Tail}),
+    {ok, {Name, [H|Tail]}};
+
+init(S) -> 
+    {ok, S}.
 
 handle_cast({echo, _Msg}, S) -> 
     {noreply, S}.
 
 % Unused for now
-handle_call({odds, {GoalsA, GoalsB}}, _From, S) -> 
-    OddsA = 1 + (((GoalsB + 1) * (8/10)) / (GoalsA + 1)),
-    OddsB = 1 + (((GoalsA + 1) * (8/10)) / (GoalsB + 1)),
-    OddsX = 1 + (2/10),
-    {reply, {OddsA, OddsX, OddsB}, S}.
+handle_call(_, _From, S) -> 
+    {reply, ok, S}.
 
-handle_info(_A, _S) ->
-    {noreply, []}.
+handle_info({Id, Odds}, {Name, S}) ->
+    io:format("~p Got Odds for ~p: ~p~n", [Name, Id, Odds]),
+    {noreply, {Name, S}}.
     
-terminate(_A, _S) ->
-    {noreply, []}.
+terminate(_A, S) ->
+    {noreply, S}.
 
-code_change(_A, _B, _C) ->
-    {noreply, []}.
+code_change(_A, _B, S) ->
+    {noreply, S}.
 
 %% Client Functions
-
-get_odds(Msg) ->
-    gen_server:call(?MODULE, {odds, Msg}).
 
