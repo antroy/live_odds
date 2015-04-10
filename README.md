@@ -1,2 +1,7 @@
 # live_odds
-Skeleton for a live_odds application in Erlang
+Live_odds application in Erlang
+
+## Mix / Relx
+
+Build tool for Erlang.
+Mix can be downloaded from 
