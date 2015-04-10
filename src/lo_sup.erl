@@ -10,7 +10,9 @@ start_link() ->
 init([]) ->
   Odds = {lo_odds, {lo_odds, start_link, []},
            permanent, brutal_kill, worker, [lo_odds]},
-  Match = {lo_match, {lo_match, start_link, []},
-           permanent, brutal_kill, worker, [lo_match]},
-  Procs = [Odds, Match],
+  MatchSup = {lo_match_sup, {lo_match_sup, start_link, []},
+           permanent, brutal_kill, supervisor, [lo_match_sup]},
+  BettorSup = {lo_bettor_sup, {lo_bettor_sup, start_link, []},
+           permanent, brutal_kill, supervisor, [lo_bettor_sup]},
+  Procs = [Odds, MatchSup, BettorSup],
   {ok, {{one_for_one, 1, 5}, Procs}}.

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+rm mix.lock
+mix deps.update --all
+mix deps.compile --all
